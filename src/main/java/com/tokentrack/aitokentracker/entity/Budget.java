@@ -29,9 +29,9 @@ public class Budget {
     @JoinColumn(name = "team_id")
     private Team team;
 
-    @Column(name = "monthly_limit_usd", precision = 10, scale = 2, nullable = false)
+    @Column(name = "monthly_limit_usd", precision = 12, scale = 6, nullable = false)
     private BigDecimal monthlyLimitUsd;
 
-    @Column(name = "current_spend_usd", precision = 10, scale = 2)
+    @Column(name = "current_spend_usd", precision = 12, scale = 6)
     private BigDecimal currentSpendUsd = BigDecimal.ZERO;
 }

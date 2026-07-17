@@ -6,7 +6,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
-
+import org.springframework.web.client.HttpClientErrorException;
+import com.tokentrack.aitokentracker.exception.LlmProviderException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,23 +30,28 @@ public class LlmProviderService {
         body.put("model", request.getModel());
         body.put("messages", request.getMessages());
 
-        Map<String, Object> response = restClient.post()
-                .uri(groqApiUrl)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + groqApiKey)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(body)
-                .retrieve()
-                .body(Map.class);
+        Map<String, Object> response;
+        try {
+            response = restClient.post()
+                    .uri(groqApiUrl)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + groqApiKey)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .body(Map.class);
+        } catch (HttpClientErrorException.TooManyRequests e) {
+            throw new LlmProviderException("Groq rate limit reached. Please try again shortly.");
+        } catch (HttpClientErrorException e) {
+            throw new LlmProviderException("Groq API error: " + e.getStatusCode());
+        }
 
         long latencyMs = System.currentTimeMillis() - startTime;
 
-        // Extract reply text
         List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
         Map<String, Object> firstChoice = choices.get(0);
         Map<String, Object> message = (Map<String, Object>) firstChoice.get("message");
         String content = (String) message.get("content");
 
-        // Extract token usage
         Map<String, Object> usage = (Map<String, Object>) response.get("usage");
         Integer tokensIn = (Integer) usage.get("prompt_tokens");
         Integer tokensOut = (Integer) usage.get("completion_tokens");

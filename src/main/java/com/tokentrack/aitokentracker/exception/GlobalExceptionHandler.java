@@ -15,4 +15,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("error", ex.getMessage()));
     }
+    @ExceptionHandler(BudgetExceededException.class)
+    public ResponseEntity<Map<String, String>> handleBudgetExceeded(BudgetExceededException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(Map.of("error", ex.getMessage()));
+    }
+    @ExceptionHandler(LlmProviderException.class)
+    public ResponseEntity<Map<String, String>> handleLlmProviderError(LlmProviderException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(Map.of("error", ex.getMessage()));
+    }
 }

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Token Tracker</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; background: #f5f6fa; }
+        h1 { color: #222; }
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .stat { text-align: center; flex: 1; }
+        .stat-value { font-size: 28px; font-weight: bold; color: #2563eb; }
+        .stat-label { font-size: 13px; color: #666; margin-top: 4px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #eee; }
+        input { padding: 8px; width: 300px; margin-bottom: 16px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 8px 16px; background: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<h1>AI Token Tracker</h1>
+
+<input id="companyId" placeholder="Enter Company ID" />
+<button onclick="loadDashboard()">Load Dashboard</button>
+
+<div class="card">
+    <div class="stat-row">
+        <div class="stat">
+            <div class="stat-value" id="totalCost">-</div>
+            <div class="stat-label">Total Cost (USD)</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="totalCalls">-</div>
+            <div class="stat-label">Total Calls</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="tokensIn">-</div>
+            <div class="stat-label">Tokens In</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="tokensOut">-</div>
+            <div class="stat-label">Tokens Out</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Cost by Feature</h3>
+    <table>
+        <thead>
+        <tr><th>Feature</th><th>Cost (USD)</th><th>Calls</th></tr>
+        </thead>
+        <tbody id="featureTable"></tbody>
+    </table>
+</div>
+
+<script>
+    async function loadDashboard() {
+      const companyId = document.getElementById('companyId').value.trim();
+      if (!companyId) return alert('Enter a company ID');
+
+      try {
+        const res = await fetch(`/v1/companies/${companyId}/dashboard/summary`);
+        if (!res.ok) throw new Error('Company not found or server error');
+        const data = await res.json();
+
+        document.getElementById('totalCost').textContent = '$' + data.totalCostUsd;
+        document.getElementById('totalCalls').textContent = data.totalCalls;
+        document.getElementById('tokensIn').textContent = data.totalTokensIn;
+        document.getElementById('tokensOut').textContent = data.totalTokensOut;
+
+        const tbody = document.getElementById('featureTable');
+        tbody.innerHTML = '';
+        data.byFeature.forEach(f => {
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${f.feature}</td><td>$${f.costUsd}</td><td>${f.calls}</td>`;
+          tbody.appendChild(row);
+        });
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+</script>
+
+</body>
+</html>

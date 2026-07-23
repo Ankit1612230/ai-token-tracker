@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -38,6 +39,22 @@ public class BudgetController {
     ) {
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new RuntimeException("Company not found"));
+
+        // Check if a budget already exists for this company/team combo
+        Optional<Budget> existing;
+        if (request.getTeamId() != null) {
+            existing = budgetRepository.findByCompanyIdAndTeamId(companyId, request.getTeamId());
+        } else {
+            existing = budgetRepository.findByCompanyId(companyId).stream()
+                    .filter(b -> b.getTeam() == null)
+                    .findFirst();
+        }
+
+        if (existing.isPresent()) {
+            Budget budget = existing.get();
+            budget.setMonthlyLimitUsd(request.getMonthlyLimitUsd());
+            return budgetRepository.save(budget); // update in place, don't create duplicate
+        }
 
         Budget budget = new Budget();
         budget.setCompany(company);

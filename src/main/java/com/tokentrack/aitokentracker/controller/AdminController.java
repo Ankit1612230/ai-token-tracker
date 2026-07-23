@@ -6,10 +6,12 @@ import com.tokentrack.aitokentracker.entity.ApiKey;
 import com.tokentrack.aitokentracker.entity.Company;
 import com.tokentrack.aitokentracker.repository.ApiKeyRepository;
 import com.tokentrack.aitokentracker.repository.CompanyRepository;
+import com.tokentrack.aitokentracker.service.HashUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -30,19 +32,26 @@ public class AdminController {
     }
 
     @PostMapping("/{companyId}/api-keys")
-    public ApiKey createApiKey(
+    public Map<String, Object> createApiKey(
             @PathVariable UUID companyId,
             @RequestBody CreateApiKeyRequest request
     ) {
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new RuntimeException("Company not found"));
 
+        String rawKey = "tk_" + UUID.randomUUID().toString().replace("-", "");
+
         ApiKey apiKey = new ApiKey();
         apiKey.setCompany(company);
         apiKey.setName(request.getName());
-        apiKey.setKeyValue("tk_" + UUID.randomUUID().toString().replace("-", ""));
+        apiKey.setKeyHash(HashUtil.sha256(rawKey));
+        apiKeyRepository.save(apiKey);
 
-        return apiKeyRepository.save(apiKey);
+        return Map.of(
+                "id", apiKey.getId(),
+                "name", apiKey.getName(),
+                "apiKey", rawKey  // shown ONLY once, at creation
+        );
     }
 
     @GetMapping

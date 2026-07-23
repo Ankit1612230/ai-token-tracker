@@ -22,7 +22,7 @@ public class ApiKey {
     private UUID id;
 
     @Column(nullable = false, unique = true)
-    private String keyValue;
+    private String keyHash;   // renamed from keyValue
 
     @Column(nullable = false)
     private String name;

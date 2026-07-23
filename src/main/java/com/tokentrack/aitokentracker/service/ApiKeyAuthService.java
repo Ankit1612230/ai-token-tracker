@@ -14,7 +14,8 @@ public class ApiKeyAuthService {
     private ApiKeyRepository apiKeyRepository;
 
     public Company resolveCompany(String rawKey) {
-        ApiKey apiKey = apiKeyRepository.findByKeyValue(rawKey)
+        String hashedKey = HashUtil.sha256(rawKey);
+        ApiKey apiKey = apiKeyRepository.findByKeyHash(hashedKey)
                 .orElseThrow(() -> new InvalidApiKeyException("Invalid API key"));
         return apiKey.getCompany();
     }

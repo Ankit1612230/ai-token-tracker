@@ -7,5 +7,5 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ApiKeyRepository extends JpaRepository<ApiKey, UUID> {
-    Optional<ApiKey> findByKeyValue(String keyValue);
+    Optional<ApiKey> findByKeyHash(String keyHash);
 }

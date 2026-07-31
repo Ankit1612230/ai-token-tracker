@@ -121,5 +121,3 @@ You should get back the LLM's response along with token counts, cost, and latenc
 - After adding API key hashing, authentication silently broke because the lookup compared a raw key against a stored hash — the write path was updated but the read path wasn't, a classic partial-migration bug
 - Duplicate company-wide budgets could be created, causing the budget check to arbitrarily pick an old/exhausted one — fixed by making budget creation idempotent (update in place instead of inserting duplicates)
 
-## Author
-Ankit Pokhariya

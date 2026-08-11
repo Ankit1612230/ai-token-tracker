@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
-@Table(name = "budgets")
+@Table(name = "budgets", uniqueConstraints = @UniqueConstraint(columnNames = {"company_id", "team_id"}))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -34,4 +34,7 @@ public class Budget {
 
     @Column(name = "current_spend_usd", precision = 12, scale = 6)
     private BigDecimal currentSpendUsd = BigDecimal.ZERO;
+
+    @Version
+    private Long version;
 }

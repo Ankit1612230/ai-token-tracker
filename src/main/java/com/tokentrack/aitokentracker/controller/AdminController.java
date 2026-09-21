@@ -7,6 +7,7 @@ import com.tokentrack.aitokentracker.entity.Company;
 import com.tokentrack.aitokentracker.repository.ApiKeyRepository;
 import com.tokentrack.aitokentracker.repository.CompanyRepository;
 import com.tokentrack.aitokentracker.service.HashUtil;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,7 +26,7 @@ public class AdminController {
     private ApiKeyRepository apiKeyRepository;
 
     @PostMapping
-    public Company createCompany(@RequestBody CreateCompanyRequest request) {
+    public Company createCompany(@Valid @RequestBody CreateCompanyRequest request) {
         Company company = new Company();
         company.setName(request.getName());
         return companyRepository.save(company);
@@ -34,7 +35,7 @@ public class AdminController {
     @PostMapping("/{companyId}/api-keys")
     public Map<String, Object> createApiKey(
             @PathVariable UUID companyId,
-            @RequestBody CreateApiKeyRequest request
+              @Valid @RequestBody CreateApiKeyRequest request
     ) {
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new RuntimeException("Company not found"));

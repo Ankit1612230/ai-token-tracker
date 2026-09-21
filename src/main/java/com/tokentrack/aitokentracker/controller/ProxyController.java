@@ -9,6 +9,7 @@ import com.tokentrack.aitokentracker.service.ApiKeyAuthService;
 import com.tokentrack.aitokentracker.service.BudgetService;
 import com.tokentrack.aitokentracker.service.LlmProviderService;
 import com.tokentrack.aitokentracker.service.PricingService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,7 +40,7 @@ public class ProxyController {
             @RequestHeader("X-Api-Key") String apiKey,
             @RequestHeader(value = "X-Feature", required = false) String feature,
             @RequestHeader(value = "X-Team-Id", required = false) UUID teamId,
-            @RequestBody ChatRequest request
+            @Valid @RequestBody ChatRequest request
     ) {
         Company company = apiKeyAuthService.resolveCompany(apiKey);
 

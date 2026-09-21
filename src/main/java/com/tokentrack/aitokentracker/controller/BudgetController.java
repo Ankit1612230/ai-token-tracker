@@ -7,6 +7,7 @@ import com.tokentrack.aitokentracker.entity.Team;
 import com.tokentrack.aitokentracker.repository.BudgetRepository;
 import com.tokentrack.aitokentracker.repository.CompanyRepository;
 import com.tokentrack.aitokentracker.repository.TeamRepository;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,7 +36,7 @@ public class BudgetController {
     @PostMapping
     public Budget createBudget(
             @PathVariable UUID companyId,
-            @RequestBody CreateBudgetRequest request
+            @Valid @RequestBody CreateBudgetRequest request
     ) {
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new RuntimeException("Company not found"));

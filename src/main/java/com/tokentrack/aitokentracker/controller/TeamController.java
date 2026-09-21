@@ -5,6 +5,7 @@ import com.tokentrack.aitokentracker.entity.Company;
 import com.tokentrack.aitokentracker.entity.Team;
 import com.tokentrack.aitokentracker.repository.CompanyRepository;
 import com.tokentrack.aitokentracker.repository.TeamRepository;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,7 +25,7 @@ public class TeamController {
     @PostMapping
     public Team createTeam(
             @PathVariable UUID companyId,
-            @RequestBody CreateTeamRequest request
+            @Valid @RequestBody CreateTeamRequest request
     ) {
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new RuntimeException("Company not found"));

@@ -6,7 +6,7 @@ import com.tokentrack.aitokentracker.repository.BudgetRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
-
+import com.tokentrack.aitokentracker.exception.ConcurrentBudgetUpdateException;
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,7 +33,7 @@ public class BudgetService {
     }
 
     public void recordSpend(UUID companyId, UUID teamId, BigDecimal cost) {
-        int maxRetries = 3;
+        int maxRetries = 8;
         for (int attempt = 0; attempt < maxRetries; attempt++) {
             try {
                 Optional<Budget> budgetOpt = findBudget(companyId, teamId);
@@ -47,7 +47,15 @@ public class BudgetService {
             } catch (OptimisticLockingFailureException e) {
                 // another request updated the budget concurrently - retry with fresh data
                 if (attempt == maxRetries - 1) {
-                    throw e; // give up after max retries
+                    throw new ConcurrentBudgetUpdateException(
+                            "Failed to record spend after " + maxRetries + " attempts due to high concurrent load"
+                    );
+                }
+                try {
+                    // small random delay so competing threads don't immediately collide again
+                    Thread.sleep((long) (Math.random() * 50));
+                } catch (InterruptedException ignored) {
+                    Thread.currentThread().interrupt();
                 }
             }
         }

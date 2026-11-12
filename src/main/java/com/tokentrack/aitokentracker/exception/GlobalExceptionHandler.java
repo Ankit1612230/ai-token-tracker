@@ -44,4 +44,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Map.of("error", ex.getMessage()));
     }
+    @ExceptionHandler(UnsupportedModelException.class)
+    public ResponseEntity<Map<String, String>> handleUnsupportedModel(UnsupportedModelException ex) {
+        return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+    }
+    @ExceptionHandler(TeamNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleTeamNotFound(TeamNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", ex.getMessage()));
+    }
 }

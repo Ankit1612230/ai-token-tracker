@@ -1,16 +1,15 @@
-version: '3.8'
 services:
   postgres:
     image: postgres:16
-    container_name: tokentrack-db
+    container_name: tokentracker-db
     environment:
       POSTGRES_DB: tokentrack
       POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin123
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - tokentrack_pgdata:/var/lib/postgresql/data
 
 volumes:
-  pgdata:
+  tokentrack_pgdata:

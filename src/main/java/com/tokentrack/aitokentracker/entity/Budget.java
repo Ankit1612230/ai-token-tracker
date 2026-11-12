@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 @Entity
@@ -20,7 +22,8 @@ public class Budget {
     @Id
     @GeneratedValue
     private UUID id;
-
+    @Column(name = "period_start")
+    private LocalDate periodStart = LocalDate.now(ZoneOffset.UTC).withDayOfMonth(1);
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_id", nullable = false)
     private Company company;

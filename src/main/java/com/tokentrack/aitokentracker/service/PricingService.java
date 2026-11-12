@@ -1,5 +1,6 @@
 package com.tokentrack.aitokentracker.service;
 
+import com.tokentrack.aitokentracker.exception.UnsupportedModelException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -18,7 +19,10 @@ public class PricingService {
     );
 
     public BigDecimal calculateCost(String model, int tokensIn, int tokensOut) {
-        double[] rates = PRICING.getOrDefault(model, new double[]{0.50, 0.50}); // fallback rate
+        double[] rates = PRICING.get(model);
+        if (rates == null) {
+            throw new UnsupportedModelException("Unsupported model: " + model);
+        } // fallback rate
 
         BigDecimal inCost = BigDecimal.valueOf(rates[0])
                 .multiply(BigDecimal.valueOf(tokensIn))
@@ -29,5 +33,10 @@ public class PricingService {
                 .divide(BigDecimal.valueOf(1_000_000), 6, RoundingMode.HALF_UP);
 
         return inCost.add(outCost);
+    }
+    public void assertSupported(String model) {
+        if (!PRICING.containsKey(model)) {
+            throw new UnsupportedModelException("Unsupported model: " + model);
+        }
     }
 }

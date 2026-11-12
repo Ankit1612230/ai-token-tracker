@@ -3,7 +3,10 @@ package com.tokentrack.aitokentracker.controller;
 import com.tokentrack.aitokentracker.dto.ChatRequest;
 import com.tokentrack.aitokentracker.dto.ChatResponse;
 import com.tokentrack.aitokentracker.entity.Company;
+import com.tokentrack.aitokentracker.entity.Team;
 import com.tokentrack.aitokentracker.entity.UsageLog;
+import com.tokentrack.aitokentracker.exception.TeamNotFoundException;
+import com.tokentrack.aitokentracker.repository.TeamRepository;
 import com.tokentrack.aitokentracker.repository.UsageLogRepository;
 import com.tokentrack.aitokentracker.service.ApiKeyAuthService;
 import com.tokentrack.aitokentracker.service.BudgetService;
@@ -35,6 +38,9 @@ public class ProxyController {
     @Autowired
     private BudgetService budgetService;
 
+    @Autowired
+    private TeamRepository teamRepository;
+
     @PostMapping("/chat")
     public ChatResponse chat(
             @RequestHeader("X-Api-Key") String apiKey,
@@ -43,7 +49,12 @@ public class ProxyController {
             @Valid @RequestBody ChatRequest request
     ) {
         Company company = apiKeyAuthService.resolveCompany(apiKey);
-
+        pricingService.assertSupported(request.getModel());
+        Team team = null;
+        if (teamId != null) {
+            team = teamRepository.findByIdAndCompanyId(teamId, company.getId())
+                    .orElseThrow(() -> new TeamNotFoundException("Team not found for this company"));
+        }
         // Check budget BEFORE calling Groq
         budgetService.checkBudget(company.getId(), teamId);
 
@@ -62,6 +73,7 @@ public class ProxyController {
         log.setTokensOut(result.tokensOut());
         log.setCostUsd(cost);
         log.setLatencyMs(result.latencyMs());
+        log.setTeam(team);
         usageLogRepository.save(log);
 
         // Record spend AFTER successful call

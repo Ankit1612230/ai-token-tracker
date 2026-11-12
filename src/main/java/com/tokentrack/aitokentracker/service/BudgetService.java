@@ -3,11 +3,14 @@ package com.tokentrack.aitokentracker.service;
 import com.tokentrack.aitokentracker.entity.Budget;
 import com.tokentrack.aitokentracker.exception.BudgetExceededException;
 import com.tokentrack.aitokentracker.repository.BudgetRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import com.tokentrack.aitokentracker.exception.ConcurrentBudgetUpdateException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,6 +28,9 @@ public class BudgetService {
         }
 
         Budget budget = budgetOpt.get();
+        if (isStale(budget)) {
+            return; // new month: previous spend no longer counts
+        }
         if (budget.getCurrentSpendUsd().compareTo(budget.getMonthlyLimitUsd()) >= 0) {
             throw new BudgetExceededException(
                     "Budget exceeded: $" + budget.getCurrentSpendUsd() + " / $" + budget.getMonthlyLimitUsd()
@@ -32,33 +38,10 @@ public class BudgetService {
         }
     }
 
+    @Transactional
     public void recordSpend(UUID companyId, UUID teamId, BigDecimal cost) {
-        int maxRetries = 8;
-        for (int attempt = 0; attempt < maxRetries; attempt++) {
-            try {
-                Optional<Budget> budgetOpt = findBudget(companyId, teamId);
-                if (budgetOpt.isEmpty()) {
-                    return;
-                }
-                Budget budget = budgetOpt.get();
-                budget.setCurrentSpendUsd(budget.getCurrentSpendUsd().add(cost));
-                budgetRepository.save(budget);
-                return; // success, exit
-            } catch (OptimisticLockingFailureException e) {
-                // another request updated the budget concurrently - retry with fresh data
-                if (attempt == maxRetries - 1) {
-                    throw new ConcurrentBudgetUpdateException(
-                            "Failed to record spend after " + maxRetries + " attempts due to high concurrent load"
-                    );
-                }
-                try {
-                    // small random delay so competing threads don't immediately collide again
-                    Thread.sleep((long) (Math.random() * 50));
-                } catch (InterruptedException ignored) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-        }
+        findBudget(companyId, teamId).ifPresent(budget ->
+                budgetRepository.addSpend(budget.getId(), cost, currentPeriod()));
     }
 
     private Optional<Budget> findBudget(UUID companyId, UUID teamId) {
@@ -68,5 +51,13 @@ public class BudgetService {
         return budgetRepository.findByCompanyId(companyId).stream()
                 .filter(b -> b.getTeam() == null)
                 .findFirst();
+    }
+    private LocalDate currentPeriod() {
+        return LocalDate.now(ZoneOffset.UTC).withDayOfMonth(1);
+    }
+
+    private boolean isStale(Budget budget) {
+        return budget.getPeriodStart() == null
+                || budget.getPeriodStart().isBefore(currentPeriod());
     }
 }
